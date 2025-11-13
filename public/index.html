@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <title>Gerador de SER - TALP</title>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="text-center my-4">Gerador de Gráfico de Espiral - TALP</h1>
+
+        <form id="ser-form">
+            
+            <div class="mb-3">
+                <label for="tema" class="form-label">Tema da Pesquisa</label>
+                <input type="text" class="form-control" id="tema" name="tema" placeholder="Ex: Vida Universitária" required>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="peso1" class="form-label">Peso 1 (Maior Prio.)</label>
+                    <input type="number" class="form-control" id="peso1" name="peso1" value="3" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="peso2" class="form-label">Peso 2 (Médio Prio.)</label>
+                    <input type="number" class="form-control" id="peso2" name="peso2" value="2" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="peso3" class="form-label">Peso 3 (Menor Prio.)</label>
+                    <input type="number" class="form-control" id="peso3" name="peso3" value="1" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="csvFile" class="form-label">Escolher Arquivo CSV da População</label>
+                <input class="form-control" type="file" id="csvFile" name="csvFile" accept=".csv" required>
+            </div>
+
+            <div class="d-grid mt-4">
+                <button type="submit" id="submit-btn" class="btn btn-primary btn-lg">Gerar Espiral</button>
+            </div>
+        </form>
+
+        <div id="loading" class="text-center mt-4 hidden">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Processando...</p>
+        </div>
+        <div id="result-area" class="mt-5">
+            </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
