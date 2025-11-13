@@ -1,19 +1,17 @@
 // Aguarda o carregamento completo do HTML
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Pega as referências dos elementos HTML que vamos manipular
+    // Pega as referências dos elementos HTML para manipular
     const form = document.getElementById('ser-form');
     const resultArea = document.getElementById('result-area');
     const submitBtn = document.getElementById('submit-btn');
     const loadingDiv = document.getElementById('loading');
 
-    // Adiciona um "ouvinte" para o evento de envio do formulário.
+    // Adicionar "ouvinte" para o evento de envio do formulario
     form.addEventListener('submit', async (event) => {
         
-        // A linha mais importante: impede que o formulário recarregue a página.
         event.preventDefault();
 
-        // --- Inicia o feedback visual para o usuário ---
         loadingDiv.classList.remove('hidden'); // Mostra a mensagem "Processando..."
         submitBtn.disabled = true;             // Desabilita o botão para evitar cliques duplos
         resultArea.innerHTML = '';             // Limpa resultados anteriores
@@ -37,11 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Se a resposta for OK, converte o corpo da resposta em JSON.
-            const data = await response.json();
+            const zonas = await response.json();
 
             // Chama a função para exibir o resultado na tela.
-            // IMPORTANTE: A chave 'imagemURL' deve ser a mesma enviada pelo seu backend.
-            displayResult(data.imagemURL);
+            displayResult(zonas);
 
         } catch (error) {
             // Se qualquer erro ocorrer no bloco 'try', ele será capturado aqui.
@@ -56,15 +53,95 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Função auxiliar para criar o HTML da imagem e do botão de download
-     * e inseri-lo na página.
-     * @param {string} imageUrl - A URL de dados da imagem gerada pelo backend.
+     * Função auxiliar para CRIAR o canvas, DESENHAR nele e 
+     * exibir o resultado (imagem + botão)
+     * @param {object} zonas - O objeto de zonas vindo do backend.
      */
-    function displayResult(imageUrl) {
+    function displayResult(zonas) {
+        // Limpa a área e cria o canvas
         resultArea.innerHTML = `
             <h2>Resultado do SER</h2>
-            <img src="${imageUrl}" alt="Gráfico SER gerado">
-            <a href="${imageUrl}" download="ser-resultado.png">Baixar Imagem</a>
+            <canvas id="ser-canvas" width="800" height="800"></canvas>
+            <a id="download-btn" href="#" download="ser-resultado.png">Baixar Imagem</a>
         `;
+
+        // Pega as referências do canvas
+        const canvas = document.getElementById('ser-canvas');
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // ADICIONA A LÓGICA DE DESENHO (copiada de gerador_imagem.js)
+        // Fundo
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        const zoneConfig = [
+            { name: 'Núcleo Central', radius: 100, color: '#FF6347' },
+            { name: 'Intermediário 1', radius: 200, color: '#FFD700' },
+            { name: 'Intermediário 2', radius: 300, color: '#90EE90' },
+            { name: 'Periférico', radius: 380, color: '#87CEEB' }
+        ];
+
+        ctx.strokeStyle = '#AAAAAA';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 10]);
+
+        // Desenha os círculos
+        zoneConfig.slice().reverse().forEach(zona => {
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, zona.radius, 0, 2 * Math.PI);
+            ctx.stroke();
+        });
+
+        // Escreve as palavras
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        zoneConfig.forEach((zona, i) => {
+            const wordsInZone = zonas[zona.name];
+            if (!wordsInZone) return; 
+
+            const innerRadius = (i === 0) ? 0 : zoneConfig[i - 1].radius;
+            const outerRadius = zona.radius;
+
+            ctx.font = 'bold 14px Arial';
+            ctx.fillStyle = zona.color;
+            ctx.fillText(zona.name, centerX, centerY - outerRadius + 15);
+
+            ctx.font = '12px Arial';
+            
+            wordsInZone.forEach((wordData, wordIndex) => {
+                 const word = wordData.word;
+                 const isNearBoundary = wordData.isNearBoundary;
+
+                 const angle = (wordIndex * 2 * Math.PI / wordsInZone.length) + (i * 0.5);
+                 const distance = innerRadius + (outerRadius - innerRadius) / 2;
+                 const x = centerX + distance * Math.cos(angle);
+                 const y = centerY + distance * Math.sin(angle);
+
+                 if (isNearBoundary) {
+                     ctx.fillStyle = '#FF0000'; // Vermelho
+                 } else {
+                     ctx.fillStyle = '#000000'; // Preto
+                 }
+                 
+                 ctx.fillText(word, x, y);
+            });
+        });
+
+        // Faz o botão de download funcionar
+        const downloadBtn = document.getElementById('download-btn');
+        const imageUrl = canvas.toDataURL('image/png'); // Gera o link da imagem
+        downloadBtn.href = imageUrl;
+
+        // Ajusta o estilo da imagem (o canvas)
+        canvas.style.maxWidth = "100%";
+        canvas.style.border = "1px solid #dee2e6";
+        canvas.style.borderRadius = "0.25rem";
+        canvas.style.marginBottom = "1.5rem";
     }
 });

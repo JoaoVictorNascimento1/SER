@@ -26,24 +26,18 @@ app.post('/api/gerar-ser', upload.single('csvFile'), (req, res) => {
             return res.status(400).json({ error: "Nenhum arquivo CSV foi inserido!" });
         }
 
-        // extrai apenas os pesos
         const { peso1, peso2, peso3 } = req.body;
         const pesos = [parseFloat(peso1), parseFloat(peso2), parseFloat(peso3)];
         
         const conteudoCSV = req.file.buffer.toString('utf-8');
-
-        // chama a funcao de processamento de dados
+        
         const zonas = processarDados(conteudoCSV, pesos);
 
         if (!zonas) {
             return res.status(400).json({ error: 'Nenhuma palavra válida encontrada no arquivo!' });
         }
 
-        // Chama o módulo de geração de imagem com os dados processados
-        const imagemURL = gerarImagemSER(zonas);
-
-        // Envia a imagem para o frontend
-        res.json({ imagemURL });
+        res.json(zonas);
 
     } catch (error) {
         console.error('Erro no servidor: ', error);
