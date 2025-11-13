@@ -4,7 +4,6 @@ import multer from 'multer';
 import { fileURLToPath } from 'url';
 
 import { processarDados } from './src/processamento_dados.js';
-import { gerarImagemSER } from './src/gerador_imagem.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
