@@ -3,91 +3,95 @@ function processarDados(conteudoCSV, pesos) {
     const palavrasPopulacao = linhas.slice(1).map(linha => linha.split(',').map(p => p.trim().toLowerCase()));
 
     const dadosPalavra = {};
-    let somaTotal = 0;
 
-    // contagem de frequencia
     palavrasPopulacao.forEach(linha => {
         linha.forEach((palavra, index) => {
             if (!palavra) return;
             if (!dadosPalavra[palavra]) {
-                dadosPalavra[palavra] = { frequencia: [0, 0, 0], index: 0, zona: '', isNearBoundary: false }; // <-- MUDANÇA
+                dadosPalavra[palavra] = { frequencia: [0, 0, 0] };
             }
             dadosPalavra[palavra].frequencia[index]++;
         });
     });
 
-    // Cálculo do índice e da soma total
+    let listaPalavras = [];
     for (const palavra in dadosPalavra) {
         const dados = dadosPalavra[palavra];
-        dados.index = (dados.frequencia[0] * pesos[0]) + (dados.frequencia[1] * pesos[1]) + (dados.frequencia[2] * pesos[2]);
-        somaTotal += dados.index;
+        const indice = (dados.frequencia[0] * pesos[0]) + 
+                       (dados.frequencia[1] * pesos[1]) + 
+                       (dados.frequencia[2] * pesos[2]);
+        
+        listaPalavras.push({
+            word: palavra,
+            index: indice,
+            cor: null
+        });
     }
 
-    if (somaTotal === 0) {
-        return null; 
-    }
+    if (listaPalavras.length === 0) return null;
 
-    // Definição das zonas
-    for (const palavra in dadosPalavra) {
-        const dados = dadosPalavra[palavra];
-        const porcentagem = (dados.index / somaTotal) * 100;
+    listaPalavras.sort((a, b) => b.index - a.index);
 
-        // Limites das zonas (em %)
-        const limiteNucleo = 76;
-        const limiteInterm1 = 51;
-        const limiteInterm2 = 26;
-        const limitePeriferico = 1;
-        const margemProximidade = 5; // Margem para ser Vermelha
+    const total = listaPalavras.length;
+    const limiteNucleo = Math.ceil(total * 0.25);      
+    const limiteInterm1 = Math.ceil(total * 0.50);     
+    const limiteInterm2 = Math.ceil(total * 0.75);     
+    
+    const ultimoIndiceNucleo = listaPalavras[limiteNucleo - 1]?.index || 0;
+    const ultimoIndiceInterm1 = listaPalavras[limiteInterm1 - 1]?.index || 0;
+    const ultimoIndiceInterm2 = listaPalavras[limiteInterm2 - 1]?.index || 0;
 
-        if (porcentagem >= limiteNucleo) {
-            dados.zona = 'Núcleo Central';
-            // Não verifica proximidade, é a zona mais alta
-        
-        } else if (porcentagem >= limiteInterm1) {
-            dados.zona = 'Intermediário 1';
-            // Verifica se está a 5% do Núcleo Central
-            if (porcentagem >= (limiteNucleo - margemProximidade)) { // <-- MUDANÇA
-                dados.isNearBoundary = true;
-            }
-        
-        } else if (porcentagem >= limiteInterm2) {
-            dados.zona = 'Intermediário 2';
-            // Verifica se está a 5% do Intermediário 1
-            if (porcentagem >= (limiteInterm1 - margemProximidade)) { // <-- MUDANÇA
-                dados.isNearBoundary = true;
-            }
+    const primeiroIndiceInterm1 = listaPalavras[limiteNucleo]?.index || 0;
+    const primeiroIndiceInterm2 = listaPalavras[limiteInterm1]?.index || 0;
+    const primeiroIndicePeriferico = listaPalavras[limiteInterm2]?.index || 0;
 
-        } else if (porcentagem >= limitePeriferico) {
-            dados.zona = 'Periférico';
-             // Verifica se está a 5% do Intermediário 2
-            if (porcentagem >= (limiteInterm2 - margemProximidade)) { // <-- MUDANÇA
-                dados.isNearBoundary = true;
-            }
-        
-        } else {
-            dados.zona = 'N/A';
-        }
-    }
-
-    // Agrupamento das palavras por zona
     const zonas = {
         'Núcleo Central': [],
         'Intermediário 1': [],
         'Intermediário 2': [],
         'Periférico': []
     };
-    
-    Object.keys(dadosPalavra).forEach(p => {
-        const dados = dadosPalavra[p];
-        const zona = dados.zona; 
+
+    listaPalavras.forEach((item, posicao) => {
+        let zonaDestino = '';
+
+        if (posicao < limiteNucleo) {
+            zonaDestino = 'Núcleo Central';
+            if (item.index <= primeiroIndiceInterm1 * 1.05) {
+                item.cor = 'blue';
+            }
         
-        if (zonas[zona]) {
+        } else if (posicao < limiteInterm1) {
+            zonaDestino = 'Intermediário 1';
             
-            zonas[zona].push({ 
-                word: p,
-                isNearBoundary: dados.isNearBoundary
-            });
+            if (item.index >= ultimoIndiceNucleo * 0.95) { 
+                item.cor = 'red'; 
+            }
+            else if (item.index <= primeiroIndiceInterm2 * 1.05) {
+                item.cor = 'blue';
+            }
+
+        } else if (posicao < limiteInterm2) {
+            zonaDestino = 'Intermediário 2';
+
+            if (item.index >= ultimoIndiceInterm1 * 0.95) { 
+                item.cor = 'red'; 
+            }
+            else if (item.index <= primeiroIndicePeriferico * 1.05) {
+                item.cor = 'blue';
+            }
+
+        } else {
+            zonaDestino = 'Periférico';
+            if (item.index >= ultimoIndiceInterm2 * 0.95) { 
+                item.cor = 'red'; 
+            }
         }
+
+        zonas[zonaDestino].push({
+            word: item.word,
+            cor: item.cor
+        });
     });
 
     return zonas;
