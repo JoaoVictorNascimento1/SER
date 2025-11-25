@@ -1,5 +1,6 @@
 function processarDados(conteudoCSV, pesos) {
     const linhas = conteudoCSV.trim().split(/\r?\n/);
+    
     const palavrasPopulacao = linhas.slice(1).map(linha => linha.split(',').map(p => p.trim().toLowerCase()));
 
     const dadosPalavra = {};
@@ -24,7 +25,7 @@ function processarDados(conteudoCSV, pesos) {
         listaPalavras.push({
             word: palavra,
             index: indice,
-            cor: null
+            highlight: null
         });
     }
 
@@ -58,39 +59,39 @@ function processarDados(conteudoCSV, pesos) {
         if (posicao < limiteNucleo) {
             zonaDestino = 'Núcleo Central';
             if (item.index <= primeiroIndiceInterm1 * 1.05) {
-                item.cor = 'blue';
+                item.highlight = 'blue';
             }
         
         } else if (posicao < limiteInterm1) {
             zonaDestino = 'Intermediário 1';
             
             if (item.index >= ultimoIndiceNucleo * 0.95) { 
-                item.cor = 'red'; 
+                item.highlight = 'red'; 
             }
             else if (item.index <= primeiroIndiceInterm2 * 1.05) {
-                item.cor = 'blue';
+                item.highlight = 'blue';
             }
 
         } else if (posicao < limiteInterm2) {
             zonaDestino = 'Intermediário 2';
 
             if (item.index >= ultimoIndiceInterm1 * 0.95) { 
-                item.cor = 'red'; 
+                item.highlight = 'red'; 
             }
             else if (item.index <= primeiroIndicePeriferico * 1.05) {
-                item.cor = 'blue';
+                item.highlight = 'blue';
             }
 
         } else {
             zonaDestino = 'Periférico';
             if (item.index >= ultimoIndiceInterm2 * 0.95) { 
-                item.cor = 'red'; 
+                item.highlight = 'red'; 
             }
         }
 
         zonas[zonaDestino].push({
             word: item.word,
-            cor: item.cor
+            highlight: item.highlight
         });
     });
 
