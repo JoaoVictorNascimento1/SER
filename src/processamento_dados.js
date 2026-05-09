@@ -1,6 +1,6 @@
 function processarDados(conteudoCSV, pesos) {
     const linhas = conteudoCSV.trim().split(/\r?\n/);
-    const palavrasPopulacao = linhas.slice(1).map(linha => linha.split(',').map(p => p.trim().toLowerCase()));
+    const palavrasPopulacao = linhas.slice(1).map(linha => linha.split(',').map(p => p.replace(/["']/g, '').trim().toLowerCase()));
 
     const dadosPalavra = {};
 
