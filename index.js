@@ -25,7 +25,6 @@ app.post('/api/gerar-ser', upload.single('csvFile'), (req, res) => {
         const { peso1, peso2, peso3 } = req.body;
         const pesos = [parseFloat(peso1), parseFloat(peso2), parseFloat(peso3)];
 
-        // Corrigido: era 'latin1', agora usa 'utf8'
         const conteudoCSV = req.file.buffer.toString('utf8');
 
         const zonas = processarDados(conteudoCSV, pesos);

@@ -92,21 +92,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ─── Calcula o raio mínimo para acomodar N palavras numa zona circular ───────
-    // Cada palavra ocupa um arco mínimo de `minArcPx` pixels na circunferência média.
     function calcRadius(nWords, innerRadius, minArcPx = 75) {
         if (nWords === 0) return innerRadius + 80;
-        // Circunferência mínima = nWords * minArcPx
-        // Usa o raio médio entre inner e outer: r_mid = inner + (outer - inner)/2
-        // Circunferência = 2π * r_mid  →  r_mid = (nWords * minArcPx) / (2π)
-        // outer = 2 * r_mid - inner
         const rMid = (nWords * minArcPx) / (2 * Math.PI);
         const outer = 2 * rMid - innerRadius;
-        return Math.max(outer, innerRadius + 80); // mínimo de 80px de largura por zona
+        return Math.max(outer, innerRadius + 80);
     }
 
     function displayResult(zonas) {
-        // ── Calcula raios dinamicamente por zona ──────────────────────────────────
         const zoneNames = ['Núcleo Central', 'Intermediário 1', 'Intermediário 2', 'Periférico'];
         const zoneColors = ['#FF6347', '#FFD700', '#90EE90', '#87CEEB'];
 
