@@ -52,8 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return '#000000';
     }
 
-
-
     // ─── Cálculo de raio dinâmico por zona ────────────────────────────────────────
 
     function calcRadius(nWords, innerRadius, minArcPx = 75) {
@@ -95,8 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const zoneNames  = ['Núcleo Central', 'Intermediário 1', 'Intermediário 2', 'Periférico'];
         const zoneColors = ['#FF6347', '#FFD700', '#90EE90', '#87CEEB'];
 
-        // Palavra com maior índice = primeira do Núcleo Central
-        // (já vem ordenada por índice decrescente do backend)
         const topWord = (zonas['Núcleo Central'] || [])[0]?.word || null;
 
         // Raio dinâmico
@@ -113,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const cx     = size / 2;
         const cy     = size / 2;
 
-        // Cria SVG
         const svg = svgEl('svg', {
             width: size,
             height: size,
@@ -158,18 +153,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 'font-weight': 'bold'
             }, zona.name));
 
-            // Demais zonas + Núcleo: mesmo layout circular
             wordsInZone.forEach((wd, idx) => {
                 const isTop = wd.word === topWord;
-                const ringDist = zona.name === 'Núcleo Central'
-                    ? outerRadius * 0.72
-                    : innerRadius + (outerRadius - innerRadius) / 2;
-                const angle    = (idx * 2 * Math.PI / wordsInZone.length) + (i * 0.5);
-                const distance = ringDist;
+                const bold  = wd.cor === 'red' || wd.cor === 'blue' || isTop;
+
+                let angle, distance;
+
+                if (zona.name === 'Núcleo Central') {
+                    // Núcleo: sem offset, layout circular simples
+                    distance = outerRadius * 0.72;
+                    angle    = (idx * 2 * Math.PI / wordsInZone.length);
+                } else {
+                    // Zonas externas: offset angular dinâmico por anel
+                    // Cada anel desloca metade do espaço angular entre suas palavras,
+                    // alternando sinal (+/-) para intercalar com o anel vizinho
+                    const baseAngleStep = (2 * Math.PI) / wordsInZone.length;
+                    const offsetSign    = (i % 2 === 0) ? 1 : -1;
+                    const offset        = offsetSign * baseAngleStep / 1.5;
+                    angle    = (idx * baseAngleStep) + offset;
+                    distance = innerRadius + (outerRadius - innerRadius) / 2;
+                }
+
                 const x = cx + distance * Math.cos(angle);
                 const y = cy + distance * Math.sin(angle);
-
-                const bold = wd.cor === 'red' || wd.cor === 'blue' || isTop;
 
                 svg.appendChild(svgEl('text', {
                     x, y,
