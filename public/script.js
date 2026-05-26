@@ -155,7 +155,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             wordsInZone.forEach((wd, idx) => {
                 const isTop = wd.word === topWord;
-                const bold  = wd.cor === 'red' || wd.cor === 'blue' || isTop;
+                const isNucleo = zona.name === 'Núcleo Central';
+                const effectiveCor = isNucleo && wd.cor === 'red' ? 'black' : wd.cor;
+                const bold  = effectiveCor === 'red' || effectiveCor === 'blue' || isTop;
 
                 let angle, distance;
 
@@ -181,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     x, y,
                     'text-anchor': 'middle',
                     'dominant-baseline': 'middle',
-                    fill: wordColor(wd.cor),
+                    fill: wordColor(effectiveCor),
                     'font-family': 'Arial, sans-serif',
                     'font-size': '14',
                     'font-weight': bold ? 'bold' : 'normal',
