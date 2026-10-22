@@ -8,27 +8,45 @@ function processarDados(conteudoCSV, pesos) {
         linha.forEach((palavra, index) => {
             if (!palavra) return;
             if (!dadosPalavra[palavra]) {
-                dadosPalavra[palavra] = { frequencia: [0, 0, 0] };
+                dadosPalavra[palavra] = { frequencia: Array(pesos.length).fill(0) };
             }
-            dadosPalavra[palavra].frequencia[index]++;
+            if (index < pesos.length) {
+                dadosPalavra[palavra].frequencia[index]++;
+            }
         });
     });
 
     let listaPalavras = [];
+    let totalEvocacoes = 0;
+    let totalSomaIndices = 0;
+
+    // calcula índices, ocorrências e os totais
     for (const palavra in dadosPalavra) {
         const dados = dadosPalavra[palavra];
-        const indice = (dados.frequencia[0] * pesos[0]) + 
-                       (dados.frequencia[1] * pesos[1]) + 
-                       (dados.frequencia[2] * pesos[2]);
         
+        const indice = dados.frequencia.reduce((soma, frequenciaAtual, i) => {
+            return soma + (frequenciaAtual * (pesos[i] || 0));
+        }, 0);
+        
+        const ocorrencias = dados.frequencia.reduce((soma, frequencia) => soma + frequencia, 0);
+        
+        totalEvocacoes += ocorrencias;
+        totalSomaIndices += indice;
+
         listaPalavras.push({
             word: palavra,
             index: indice,
+            ocorrencias,
             cor: null
         });
     }
 
     if (listaPalavras.length === 0) return null;
+
+    //  calcula percentual com base na soma total dos indices
+    listaPalavras.forEach(item => {
+        item.percentual = (item.index / totalSomaIndices) * 100;
+    });
 
     listaPalavras.sort((a, b) => b.index - a.index);
 
@@ -36,14 +54,6 @@ function processarDados(conteudoCSV, pesos) {
     const limiteNucleo = Math.ceil(total * 0.25);      
     const limiteInterm1 = Math.ceil(total * 0.50);     
     const limiteInterm2 = Math.ceil(total * 0.75);     
-    
-    const ultimoIndiceNucleo = listaPalavras[limiteNucleo - 1]?.index || 0;
-    const ultimoIndiceInterm1 = listaPalavras[limiteInterm1 - 1]?.index || 0;
-    const ultimoIndiceInterm2 = listaPalavras[limiteInterm2 - 1]?.index || 0;
-
-    const primeiroIndiceInterm1 = listaPalavras[limiteNucleo]?.index || 0;
-    const primeiroIndiceInterm2 = listaPalavras[limiteInterm1]?.index || 0;
-    const primeiroIndicePeriferico = listaPalavras[limiteInterm2]?.index || 0;
 
     const zonas = {
         'Núcleo Central': [],
@@ -52,49 +62,59 @@ function processarDados(conteudoCSV, pesos) {
         'Periférico': []
     };
 
+    // Distribui as palavras nas zonas (já ordenadas por índice)
     listaPalavras.forEach((item, posicao) => {
         let zonaDestino = '';
 
-        if (posicao < limiteNucleo) {
-            zonaDestino = 'Núcleo Central';
-            if (item.index <= primeiroIndiceInterm1 * 1.05) {
-                item.cor = 'blue';
-            }
-        
-        } else if (posicao < limiteInterm1) {
-            zonaDestino = 'Intermediário 1';
-            
-            if (item.index >= ultimoIndiceNucleo * 0.95) { 
-                item.cor = 'red'; 
-            }
-            else if (item.index <= primeiroIndiceInterm2 * 1.05) {
-                item.cor = 'blue';
-            }
+        if (posicao < limiteNucleo) zonaDestino = 'Núcleo Central';
+        else if (posicao < limiteInterm1) zonaDestino = 'Intermediário 1';
+        else if (posicao < limiteInterm2) zonaDestino = 'Intermediário 2';
+        else zonaDestino = 'Periférico';
 
-        } else if (posicao < limiteInterm2) {
-            zonaDestino = 'Intermediário 2';
-
-            if (item.index >= ultimoIndiceInterm1 * 0.95) { 
-                item.cor = 'red'; 
-            }
-            else if (item.index <= primeiroIndicePeriferico * 1.05) {
-                item.cor = 'blue';
-            }
-
-        } else {
-            zonaDestino = 'Periférico';
-            if (item.index >= ultimoIndiceInterm2 * 0.95) { 
-                item.cor = 'red'; 
-            }
-        }
-
-        zonas[zonaDestino].push({
-            word: item.word,
-            cor: item.cor
-        });
+        item.zona = zonaDestino;
+        zonas[zonaDestino].push(item);
     });
 
-    return zonas;
+    // Aplica a nova lógica posicional de cores (25% topo/base)
+    const zonasFormatadas = {};
+    for (const nomeZona in zonas) {
+        const palavrasDaZona = zonas[nomeZona];
+        const n = palavrasDaZona.length;
+        
+        // Define o limite de 25% (arredondado)
+        const limite25 = Math.round(n * 0.25);
+
+        zonasFormatadas[nomeZona] = palavrasDaZona.map((item, indexZona) => {
+            // Como a lista já está decrescente:
+            // topo do array = maior índice. base do array = menor índice.
+            if (nomeZona !== 'Núcleo Central' && indexZona < limite25) {
+                item.cor = 'red';
+            } else if (nomeZona !== 'Periférico' && indexZona >= (n - limite25) && limite25 > 0) {
+                item.cor = 'blue';
+            } else {
+                item.cor = null; // Sem cor (preto)
+            }
+
+            return {
+                word: item.word,
+                cor: item.cor
+            };
+        });
+    }
+
+    return {
+        zonas: zonasFormatadas,
+        estatisticas: listaPalavras.map((item, posicao) => ({
+            palavra: item.word,
+            percentual: item.percentual,
+            ocorrencias: item.ocorrencias,
+            pontuacao: item.index,
+            zona: item.zona,
+            posicao: posicao + 1
+        })),
+        totalEvocacoes,
+        totalSomaIndices
+    };
 }
 
 export {processarDados};

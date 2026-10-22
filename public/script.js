@@ -3,13 +3,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('ser-form');
     const resultArea = document.getElementById('result-area');
     const submitBtn = document.getElementById('submit-btn');
+    const statsBtn = document.getElementById('stats-btn');
     const loadingDiv = document.getElementById('loading');
+    let resultadoAtual = null;
+
+    const numPalavrasSelect = document.getElementById('numPalavras');
+    const pesosAviso = document.getElementById('pesosAviso');
+
+    if (numPalavrasSelect && pesosAviso) {
+        numPalavrasSelect.addEventListener('change', (event) => {
+            const num = parseInt(event.target.value);
+            // Gera um array decrescente e transforma em string: ex. [4, 3, 2, 1] -> "4, 3, 2, 1"
+            const pesosArray = Array.from({length: num}, (_, i) => num - i);
+            pesosAviso.textContent = `Pesos aplicados (ordem decrescente): ${pesosArray.join(', ')}`;
+        });
+    }
 
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
+        await processarFormulario('espiral');
+    });
 
+    statsBtn.addEventListener('click', async () => {
+        if (!form.reportValidity()) return;
+        await processarFormulario('estatisticas');
+    });
+
+    async function processarFormulario(modo) {
         loadingDiv.classList.remove('hidden');
         submitBtn.disabled = true;
+        statsBtn.disabled = true;
         resultArea.innerHTML = '';
 
         const formData = new FormData(form);
@@ -25,8 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || `Erro HTTP: ${response.status}`);
             }
 
-            const zonas = await response.json();
-            displayResult(zonas);
+            resultadoAtual = await response.json();
+            if (modo === 'estatisticas') {
+                displayStatistics(resultadoAtual);
+            } else {
+                displayResult(resultadoAtual.zonas);
+            }
 
         } catch (error) {
             resultArea.innerHTML = `<p style="color: red;"><strong>Erro:</strong> ${error.message}</p>`;
@@ -34,8 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             loadingDiv.classList.add('hidden');
             submitBtn.disabled = false;
+            statsBtn.disabled = false;
         }
-    });
+    }
 
     // ─── Helpers SVG ──────────────────────────────────────────────────────────────
 
@@ -220,5 +248,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultArea.appendChild(btnSVG);
         resultArea.appendChild(btnPNG);
+    }
+
+    function displayStatistics(resultado) {
+        const tabela = document.createElement('div');
+        tabela.className = 'table-responsive';
+
+        const heading = document.createElement('h2');
+        heading.className = 'mb-3';
+        heading.textContent = 'Estatísticas das palavras';
+        resultArea.appendChild(heading);
+
+        const resumo = document.createElement('p');
+        resumo.className = 'text-muted mb-4';
+        resumo.innerHTML = `${resultado.estatisticas.length} palavras únicas em ${resultado.totalEvocacoes} evocações válidas.<br>
+                            Soma Total dos Índices Relativos: <strong>${resultado.totalSomaIndices}</strong>`;
+        resultArea.appendChild(resumo);
+
+        const table = document.createElement('table');
+        table.className = 'table table-striped table-hover align-middle';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Palavra</th>
+                    <th scope="col">Participação</th>
+                    <th scope="col">Ocorrências</th>
+                    <th scope="col">Indice Relativo</th>
+                    <th scope="col">Zona</th>
+                </tr>
+            </thead>
+            <tbody></tbody>`;
+
+        const tbody = table.querySelector('tbody');
+        resultado.estatisticas.forEach(item => {
+            const row = document.createElement('tr');
+            [
+                item.posicao,
+                item.palavra,
+                `${item.percentual.toFixed(2)}%`,
+                item.ocorrencias,
+                item.pontuacao,
+                item.zona
+            ].forEach(value => {
+                const cell = document.createElement('td');
+                cell.textContent = value;
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        });
+
+        const nota = document.createElement('p');
+        nota.className = 'small text-muted mt-2';
+        nota.textContent = 'A participação (%) reflete o peso cognitivo, sendo calculada sobre a soma total dos índices relativos. O índice relativo soma as ocorrências de cada palavra multiplicadas pelos pesos das posições.';
+
+        const voltarBtn = document.createElement('button');
+        voltarBtn.type = 'button';
+        voltarBtn.className = 'btn btn-outline-secondary mt-2';
+        voltarBtn.textContent = 'Voltar para a espiral';
+        voltarBtn.addEventListener('click', () => displayResult(resultadoAtual.zonas));
+
+        tabela.appendChild(table);
+        resultArea.appendChild(tabela);
+        resultArea.appendChild(nota);
+        resultArea.appendChild(voltarBtn);
     }
 });

@@ -22,18 +22,24 @@ app.post('/api/gerar-ser', upload.single('csvFile'), (req, res) => {
             return res.status(400).json({ error: "Nenhum arquivo CSV foi inserido!" });
         }
 
-        const { peso1, peso2, peso3 } = req.body;
-        const pesos = [parseFloat(peso1), parseFloat(peso2), parseFloat(peso3)];
+        // Lê a quantidade de palavras do form e constrói o array decrescente
+        const numPalavras = parseInt(req.body.numPalavras, 10) || 3;
+        
+        if (numPalavras < 2 || numPalavras > 6) {
+            return res.status(400).json({ error: "Número de palavras inválido. Escolha entre 2 e 6." });
+        }
+
+        // Se n = 4, gera [4, 3, 2, 1]
+        const pesos = Array.from({ length: numPalavras }, (_, i) => numPalavras - i);
 
         const conteudoCSV = req.file.buffer.toString('utf8');
+        const resultado = processarDados(conteudoCSV, pesos);
 
-        const zonas = processarDados(conteudoCSV, pesos);
-
-        if (!zonas) {
+        if (!resultado) {
             return res.status(400).json({ error: 'Nenhuma palavra válida encontrada no arquivo!' });
         }
 
-        res.json(zonas);
+        res.json(resultado);
 
     } catch (error) {
         console.error('Erro no servidor: ', error);

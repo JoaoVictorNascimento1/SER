@@ -146,5 +146,5 @@ A utilização da ferramenta é bem simples e ocorre de forma fluida através da
    * **Peso 3 (Menor Prio.):** 1 (Para a terceira palavra).
 3. **Upload do CSV:** Clique em "Escolher arquivo" e selecione o seu `.csv` contendo a população pesquisada. 
    * *Atenção ao formato do arquivo:* O sistema ignora a primeira linha (cabeçalho) e lê as palavras das linhas seguintes separadas por vírgula.
-4. **Processamento:** Clique no botão **"Gerar Espiral"**. O sistema exibirá um aviso de "Processando..." enquanto o backend realiza os cálculos de relevância e o fatiamento matemático das zonas.
-5. **Resultado e Exportação:** O gráfico será renderizado na tela em formato de alvo. Analise as zonas e as palavras destacadas em vermelho ou azul, que representam os termos fronteiriços. Para salvar seu gráfico, basta clicar em **"Baixar Imagem"** e o navegador fará o download de um arquivo `.png` com o resultado visual completo.
+4. **Processamento:** Clique em **"Gerar Espiral"** para criar o gráfico ou em **"Estatísticas"** para consultar os dados de cada palavra.
+5. **Resultado e Exportação:** A tabela de estatísticas mostra a participação de cada palavra no total de evocações válidas, o número de ocorrências, a pontuação total calculada com os pesos e a zona correspondente. Na visualização do gráfico, use **"Baixar SVG"** ou **"Baixar PNG"** para exportar a espiral.
